@@ -81,7 +81,7 @@ Spring Boot Backend
 
 ### Hosting
 - Frontend: Vercel
-- Backend: Render or Railway
+- Backend: Railway
 
 ### Database
 - none
@@ -263,8 +263,6 @@ Notes:
 
 For validation, supported countries can be limited to:
 - Bulgaria
-- Germany
-- France
 
 Hardcoded demo rates are acceptable for the first version.
 
@@ -321,7 +319,7 @@ Why:
 - perfect for demos
 
 ### Backend
-Deploy to Render or Railway.
+Deploy to Railway.
 
 Why:
 - simple Spring Boot hosting
