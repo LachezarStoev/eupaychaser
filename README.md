@@ -1,42 +1,89 @@
 # EUPayChaser
 
-EUPayChaser is a SaaS tool that helps EU freelancers and small businesses recover overdue B2B invoice payments in a professional, automated way.
+EUPayChaser is a validation demo SaaS tool that helps EU freelancers and small businesses recover overdue B2B invoice payments in a professional, automated way.
 
 ## One-line pitch
 Upload one overdue invoice → system calculates legal extras → sends professional follow-ups → tracks until paid.
 
-## Problem
-- Late payments are common
-- Businesses don’t claim interest + €40 (EU directive)
-- They avoid conflict
+## Validation Demo Features
+- Create a late-invoice case (amount, due date, debtor email, country)
+- Calculate statutory interest and €40 compensation
+- Generate a professional PDF notice
+- Preview and send payment reminder email
 
-## Solution
-- Calculate statutory interest
-- Add €40 compensation
-- Generate PDF notice
-- Send staged emails (soft → final)
-- Track + escalate
+## Stack
+- Frontend: React + Vite
+- Backend: Spring Boot (Java 21)
+- PDF: OpenPDF
+- Email: provider adapter (mocked in CI)
+- Database: none (stateless validation flow)
 
-## Target users
-- Freelancers
-- Agencies
-- Service SMEs
+## Run locally
 
-## Business model
-- €19–€49/month
-- Optional per-case fee later
+### Backend
+```bash
+cd backend
+mvn spring-boot:run
+```
 
-## MVP scope
-- Create case
-- Calculate
-- Generate PDF
-- Send email
-- Follow-up scheduler
+Backend starts on `http://localhost:8080`.
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend starts on `http://localhost:5173`.
+
+Set API base if needed:
+```bash
+VITE_API_BASE=http://localhost:8080 npm run dev
+```
+
+## API Endpoints
+- `POST /api/calculate`
+- `POST /api/pdf`
+- `POST /api/email/preview`
+- `POST /api/email/send`
+
+## Test Strategy
+
+### Integration tests (backend)
+`backend/src/test/java/com/eupaychaser/e2e/ValidationFlowTest.java` exercises the full backend flow without mocking app internals:
+- calculate
+- PDF generation
+- email preview
+- email send
+
+External email provider calls are mocked with MockWebServer in backend integration tests.
+
+### E2E tests (frontend → backend)
+`frontend/tests/full-flow.spec.js` executes the full UI journey against a real Spring Boot process:
+- fill form
+- calculate
+- generate PDF
+- preview email
+- send
+
+The backend points to a mocked WireMock email endpoint in CI.
+
+## GitHub Pipeline
+`.github/workflows/ci.yml` runs:
+1. backend tests (including integration flow + mocked external provider (MockWebServer in test runtime))
+2. frontend Playwright E2E against running backend + mocked email provider
+
+## Validation Goal
+Get accountants to say:
+- "this is useful"
+- "clients need this"
+- "I would recommend it"
+- "how much does it cost?"
+
+Use `DEMO_OUTREACH_PLAN.md` to execute outreach and presentation.
 
 ## Important
 - Not legal advice
 - Not an EU authority
 - Independent service
-
-## Goal
-Get first paying user ASAP
