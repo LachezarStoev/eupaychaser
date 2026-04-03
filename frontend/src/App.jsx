@@ -1,23 +1,72 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+const FALLBACK_COUNTRIES = [
+  { code: 'BG', rate: 10.15 },
+  { code: 'DE', rate: 10.27 },
+  { code: 'FR', rate: 12.15 }
+];
 
 export default function App() {
   const [form, setForm] = useState({ amount: '', dueDate: '', debtorEmail: '', country: 'BG' });
+  const [countries, setCountries] = useState(FALLBACK_COUNTRIES);
   const [calculation, setCalculation] = useState(null);
   const [emailPreview, setEmailPreview] = useState(null);
   const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
 
-  const update = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const isFormValid = useMemo(() => {
+    return Number(form.amount) > 0 && form.dueDate && form.debtorEmail && form.country;
+  }, [form]);
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/countries`);
+        if (!response.ok) return;
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setCountries(data);
+          if (!data.find((country) => country.code === form.country)) {
+            setForm((prev) => ({ ...prev, country: data[0].code }));
+          }
+        }
+      } catch {
+        // fallback to hardcoded list for demo resilience
+      }
+    };
+
+    fetchCountries();
+  }, []);
+
+  const update = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setError('');
+  };
 
   const callApi = async (path, body) => {
+    setError('');
     const response = await fetch(`${API_BASE}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if (!response.ok) throw new Error('Request failed');
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || 'Request failed');
+    }
+
     return response;
+  };
+
+  const runAction = async (action) => {
+    try {
+      await action();
+    } catch (err) {
+      setError(err.message || 'Something went wrong.');
+      setStatus('');
+    }
   };
 
   const calculate = async () => {
@@ -65,17 +114,19 @@ export default function App() {
         <label>Debtor Email<input name="debtorEmail" type="email" value={form.debtorEmail} onChange={update} /></label>
         <label>Country
           <select name="country" value={form.country} onChange={update}>
-            <option value="BG">Bulgaria</option>
-            <option value="DE">Germany</option>
-            <option value="FR">France</option>
+            {countries.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.code} ({country.rate}%)
+              </option>
+            ))}
           </select>
         </label>
 
         <div className="actions">
-          <button onClick={calculate}>Calculate</button>
-          <button onClick={generatePdf}>Generate PDF</button>
-          <button onClick={previewEmail}>Preview Email</button>
-          <button onClick={sendEmail} disabled={!emailPreview}>Send</button>
+          <button onClick={() => runAction(calculate)} disabled={!isFormValid}>Calculate</button>
+          <button onClick={() => runAction(generatePdf)} disabled={!isFormValid}>Generate PDF</button>
+          <button onClick={() => runAction(previewEmail)} disabled={!isFormValid}>Preview Email</button>
+          <button onClick={() => runAction(sendEmail)} disabled={!emailPreview}>Send</button>
         </div>
       </section>
 
@@ -100,7 +151,9 @@ export default function App() {
         </section>
       )}
 
+      {error && <p className="error">{error}</p>}
       <p className="status">{status}</p>
+      <p className="disclaimer">Not legal advice. Independent service demo.</p>
     </main>
   );
 }

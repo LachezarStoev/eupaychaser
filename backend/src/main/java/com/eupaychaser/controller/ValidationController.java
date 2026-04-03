@@ -4,6 +4,7 @@ import com.eupaychaser.dto.*;
 import com.eupaychaser.service.CalculationService;
 import com.eupaychaser.service.EmailService;
 import com.eupaychaser.service.PdfService;
+import com.eupaychaser.service.CountryRateService;
 import jakarta.validation.Valid;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -11,17 +12,29 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 public class ValidationController {
     private final CalculationService calculationService;
     private final PdfService pdfService;
     private final EmailService emailService;
+    private final CountryRateService countryRateService;
 
-    public ValidationController(CalculationService calculationService, PdfService pdfService, EmailService emailService) {
+    public ValidationController(CalculationService calculationService, PdfService pdfService, EmailService emailService, CountryRateService countryRateService) {
         this.calculationService = calculationService;
         this.pdfService = pdfService;
         this.emailService = emailService;
+        this.countryRateService = countryRateService;
+    }
+
+
+    @GetMapping("/countries")
+    public List<CountryRateResponse> listCountries() {
+        return countryRateService.supportedCountries().stream()
+                .map(entry -> new CountryRateResponse(entry.getKey(), entry.getValue()))
+                .toList();
     }
 
     @PostMapping("/calculate")

@@ -43,6 +43,7 @@ VITE_API_BASE=http://localhost:8080 npm run dev
 ```
 
 ## API Endpoints
+- `GET /api/countries`
 - `POST /api/calculate`
 - `POST /api/pdf`
 - `POST /api/email/preview`
@@ -87,3 +88,19 @@ Use `DEMO_OUTREACH_PLAN.md` to execute outreach and presentation.
 - Not legal advice
 - Not an EU authority
 - Independent service
+
+## Production-like configuration
+
+For real provider integration (still demo-safe), set:
+
+```bash
+APP_EMAIL_PROVIDER=mailgun
+APP_EMAIL_PROVIDER_URL=https://your-provider-endpoint.example/send
+```
+
+In local validation demos, keep defaults and email sending remains simulated when no provider URL is configured.
+
+## Validation operations assets
+
+- Contact list template: `VALIDATION_CONTACT_TRACKER.csv`
+- Outreach script + cadence: `DEMO_OUTREACH_PLAN.md`
