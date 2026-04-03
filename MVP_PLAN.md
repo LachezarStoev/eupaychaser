@@ -1,60 +1,167 @@
-# MVP Plan
+# MVP Plan (Validation Demo)
 
 ## Goal
-Get 1 paying customer
+Validate that accountants understand the product and see real value.
 
 ---
 
-## 1
-- Setup Spring Boot project
-- Create InvoiceCase entity
-- Basic CRUD API
+## Core Principle
+This is a **demo**, not a full MVP.
+
+You are validating:
+- usefulness
+- interest
+- willingness to recommend
+
+NOT:
+- scalability
+- architecture
+- monetization
 
 ---
 
-## 2
-- Interest calculation logic
-- PDF generation
-- Simple email sending
+## Product Overview
+EUPayChaser is a demo web tool that:
+
+- calculates statutory late payment interest
+- adds €40 compensation (EU directive)
+- generates a professional PDF notice
+- sends a payment reminder email
+
+Based on Directive 2011/7/EU
 
 ---
 
-## 3
-- React UI:
-  - create case
-  - list cases
-- Connect API
+## Core Flow
+
+1. User inputs:
+   - amount
+   - due date
+   - debtor email
+   - country
+
+2. System:
+   - calculates interest
+   - adds €40
+   - generates PDF
+   - shows preview
+
+3. User:
+   - clicks "Send"
+
+4. System:
+   - sends email
 
 ---
 
-## 3
-- Add approval step
-- Add follow-up scheduler
+## Calculation (Simplified but Law-Based)
+
+Use:
+
+late_days = max(0, today - due_date)
+
+interest = amount * (rate / 100) * (late_days / 365)
+
+fixed_fee = 40
+
+total = amount + interest + fixed_fee
+
+Notes:
+- simple interest
+- no compounding
+- €40 always included
+- VAT not applied on interest
+
+Example rates:
+- Bulgaria: 10.15%
+- Germany: 10.27%
+- France: 12.15%
 
 ---
 
-## 4
-- Deploy:
-  - Backend → Render
-  - Frontend → Vercel
-  - DB → Supabase
+## Required Features
+
+### 1. Form
+- amount
+- due date
+- email
+- country
+
+### 2. Calculation
+- interest
+- €40
+- total
+
+### 3. PDF
+- professional layout
+- includes breakdown
+
+### 4. Email
+- preview
+- send via Mailgun / SendGrid
 
 ---
 
-## Validation
-- Talk to 10 people
-- Get 3 cases
-- Close 1 paid user
+## Tech Stack
+
+Backend:
+- Spring Boot
+
+Frontend:
+- React (Vite)
+
+Email:
+- Mailgun / SendGrid
+
+PDF:
+- OpenPDF
+
+Database:
+- NONE
 
 ---
 
-## Rules
-- No integrations
-- No AI features
-- No complex UI
-- No perfection
+## Deployment
+
+Frontend:
+- Vercel
+
+Backend:
+- Render or Railway
 
 ---
 
-## Success
-1 user pays = success
+## What NOT to Build
+
+- user accounts
+- subscriptions
+- payments
+- database
+- dashboards
+- integrations
+- automation flows
+
+---
+
+## Demo Usage
+
+Show to accountants:
+
+"Here is how your client can handle a late invoice in 2 clicks"
+
+---
+
+## Validation Success
+
+You succeed if they say:
+
+- "this is useful"
+- "clients need this"
+- "I would recommend it"
+- "how much does it cost?"
+
+---
+
+## Final Rule
+
+Build only what is needed to demonstrate value.
