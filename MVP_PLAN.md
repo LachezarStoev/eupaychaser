@@ -1,60 +1,89 @@
-# MVP Plan (3–5 days)
+# MVP Plan (Validation First)
 
 ## Goal
 Get 1 paying customer
 
 ---
 
-## Day 1
-- Setup Spring Boot project
-- Create InvoiceCase entity
-- Basic CRUD API
+## Philosophy
+
+Build the smallest possible product that proves:
+
+> "Someone will pay to recover overdue invoice payments in a structured, professional way"
+
+Do NOT optimize for scalability.
+Do NOT build full SaaS.
+Do NOT add integrations.
 
 ---
 
-## Day 2
-- Interest calculation logic
-- PDF generation
-- Simple email sending
+## Scope (MVP)
+
+Single flow:
+
+1. User inputs:
+   - invoice amount
+   - due date
+   - debtor email
+   - debtor country
+
+2. System:
+   - calculates statutory interest
+   - adds €40 compensation
+   - computes total
+   - generates PDF notice
+   - shows preview
+
+3. User:
+   - clicks "Send"
+
+4. System:
+   - sends email
+   - DONE
 
 ---
 
-## Day 3
-- React UI:
-  - create case
-  - list cases
-- Connect API
+## What is NOT included
 
----
-
-## Day 4
-- Add approval step
-- Add follow-up scheduler
-
----
-
-## Day 5
-- Deploy:
-  - Backend → Render
-  - Frontend → Vercel
-  - DB → Supabase
-
----
-
-## Validation
-- Talk to 10 people
-- Get 3 cases
-- Close 1 paid user
-
----
-
-## Rules
+- No user accounts
+- No database
+- No invoice history
 - No integrations
+- No dashboards
+- No automation sequences
+- No payments system
 - No AI features
-- No complex UI
-- No perfection
 
 ---
 
-## Success
-1 user pays = success
+## Tech Stack
+
+### Backend
+- Spring Boot
+- Java 21
+
+### Frontend
+- React (Vite) OR simple HTML form
+
+### Email
+- Mailgun OR SendGrid
+
+### PDF
+- OpenPDF OR iText
+
+### Storage
+- In-memory (no persistence)
+
+---
+
+## Architecture
+
+```text
+User (Browser)
+    ↓
+Frontend (Form)
+    ↓
+Spring Boot API
+    ├── Interest Calculation
+    ├── PDF Generation
+    └── Email Sending
