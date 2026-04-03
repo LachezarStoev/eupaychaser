@@ -17,6 +17,7 @@ import org.springframework.test.context.DynamicPropertySource;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -62,6 +63,18 @@ class ValidationFlowTest {
                 "debtorEmail", "client@example.com",
                 "country", "BG"
         );
+
+        ResponseEntity<List<Map<String, Object>>> countries = restTemplate.exchange(
+                url("/api/countries"),
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+        assertThat(countries.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(countries.getBody()).isNotNull();
+        assertThat(countries.getBody()).hasSizeGreaterThanOrEqualTo(3);
+        assertThat(countries.getBody().get(0)).containsKeys("code", "rate");
 
         ResponseEntity<Map<String, Object>> calc = restTemplate.exchange(
                 url("/api/calculate"),
