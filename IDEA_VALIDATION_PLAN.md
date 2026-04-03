@@ -1,4 +1,4 @@
-# MVP Plan (Validation Demo)
+# Idea validation plan
 
 ## Goal
 Validate that accountants understand the product and see real value.
