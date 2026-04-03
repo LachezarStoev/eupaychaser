@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -15,13 +16,16 @@ import java.time.LocalDate;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ValidationFlowTest {
 
     @RegisterExtension
-    static WireMockExtension wireMock = WireMockExtension.newInstance().options(options().dynamicPort()).build();
+    static WireMockExtension wireMock = WireMockExtension.newInstance()
+            .options(wireMockConfig().dynamicPort())
+            .build();
 
     @DynamicPropertySource
     static void configure(DynamicPropertyRegistry registry) {
@@ -48,7 +52,13 @@ class ValidationFlowTest {
                 "country", "BG"
         );
 
-        ResponseEntity<Map> calc = restTemplate.postForEntity(url("/api/calculate"), payload, Map.class);
+        ResponseEntity<Map<String, Object>> calc = restTemplate.exchange(
+                url("/api/calculate"),
+                HttpMethod.POST,
+                new HttpEntity<>(payload),
+                new ParameterizedTypeReference<>() {
+                }
+        );
         assertThat(calc.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(calc.getBody()).containsKeys("lateDays", "interest", "fixedFee", "totalClaim");
 
@@ -58,7 +68,13 @@ class ValidationFlowTest {
         assertThat(pdf.getBody()).isNotNull();
         assertThat(pdf.getBody().length).isGreaterThan(100);
 
-        ResponseEntity<Map> preview = restTemplate.postForEntity(url("/api/email/preview"), payload, Map.class);
+        ResponseEntity<Map<String, Object>> preview = restTemplate.exchange(
+                url("/api/email/preview"),
+                HttpMethod.POST,
+                new HttpEntity<>(payload),
+                new ParameterizedTypeReference<>() {
+                }
+        );
         assertThat(preview.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(preview.getBody()).containsKeys("subject", "body");
 
@@ -70,9 +86,15 @@ class ValidationFlowTest {
                 "body", preview.getBody().get("body")
         );
 
-        ResponseEntity<Map> send = restTemplate.postForEntity(url("/api/email/send"), sendPayload, Map.class);
+        ResponseEntity<Map<String, Object>> send = restTemplate.exchange(
+                url("/api/email/send"),
+                HttpMethod.POST,
+                new HttpEntity<>(sendPayload),
+                new ParameterizedTypeReference<>() {
+                }
+        );
         assertThat(send.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(send.getBody().get("sent")).isEqualTo(true);
+        assertThat(send.getBody()).containsEntry("sent", true);
 
         wireMock.verify(postRequestedFor(urlEqualTo("/send"))
                 .withRequestBody(matchingJsonPath("$.to", equalTo("client@example.com"))));
