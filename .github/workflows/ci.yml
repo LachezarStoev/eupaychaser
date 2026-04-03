@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Run backend tests (with mocked external provider)
+        run: |
+          cd backend
+          mvn -B test
+
+  frontend-e2e:
+    runs-on: ubuntu-latest
+    needs: backend-tests
+    services:
+      wiremock:
+        image: wiremock/wiremock:3.9.1
+        ports:
+          - 8081:8080
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Install Playwright browser
+        run: |
+          cd frontend
+          npx playwright install --with-deps chromium
+
+      - name: Stub mocked email provider
+        run: |
+          curl -sS -X POST http://127.0.0.1:8081/__admin/mappings \
+            -H 'Content-Type: application/json' \
+            -d '{"request":{"method":"POST","urlPath":"/send"},"response":{"status":200,"jsonBody":{"ok":true}}}'
+
+      - name: Start backend
+        run: |
+          cd backend
+          APP_EMAIL_PROVIDER=wiremock \
+          APP_EMAIL_PROVIDER_URL=http://127.0.0.1:8081/send \
+          mvn -B spring-boot:run > ../backend.log 2>&1 &
+
+      - name: Wait for backend
+        run: |
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:8080/api/calculate -X POST -H 'Content-Type: application/json' -d '{"amount":100,"dueDate":"2026-03-01","debtorEmail":"a@b.com","country":"BG"}' > /dev/null; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Backend failed to start"
+          cat backend.log
+          exit 1
+
+      - name: Run FE->BE E2E
+        env:
+          VITE_API_BASE: http://127.0.0.1:8080
+        run: |
+          cd frontend
+          npm run test:e2e

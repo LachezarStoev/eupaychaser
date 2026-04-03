@@ -9,13 +9,13 @@ Upload one overdue invoice → system calculates legal extras → sends professi
 - Create a late-invoice case (amount, due date, debtor email, country)
 - Calculate statutory interest and €40 compensation
 - Generate a professional PDF notice
-- Preview and send payment reminder email (demo sender)
+- Preview and send payment reminder email
 
 ## Stack
 - Frontend: React + Vite
 - Backend: Spring Boot (Java 21)
 - PDF: OpenPDF
-- Email: provider-ready demo service (Mailgun/SendGrid style integration point)
+- Email: provider adapter (mocked in CI)
 - Database: none (stateless validation flow)
 
 ## Run locally
@@ -47,6 +47,32 @@ VITE_API_BASE=http://localhost:8080 npm run dev
 - `POST /api/pdf`
 - `POST /api/email/preview`
 - `POST /api/email/send`
+
+## Test Strategy
+
+### Integration tests (backend)
+`backend/src/test/java/com/eupaychaser/e2e/ValidationFlowTest.java` exercises the full backend flow without mocking app internals:
+- calculate
+- PDF generation
+- email preview
+- email send
+
+External email provider calls are mocked with WireMock only.
+
+### E2E tests (frontend → backend)
+`frontend/tests/full-flow.spec.js` executes the full UI journey against a real Spring Boot process:
+- fill form
+- calculate
+- generate PDF
+- preview email
+- send
+
+The backend points to a mocked WireMock email endpoint in CI.
+
+## GitHub Pipeline
+`.github/workflows/ci.yml` runs:
+1. backend tests (including integration flow + mocked external provider)
+2. frontend Playwright E2E against running backend + mocked email provider
 
 ## Validation Goal
 Get accountants to say:
