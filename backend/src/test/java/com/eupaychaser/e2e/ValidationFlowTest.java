@@ -1,8 +1,11 @@
 package com.eupaychaser.e2e;
 
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -12,25 +15,33 @@ import org.springframework.http.*;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ValidationFlowTest {
 
-    @RegisterExtension
-    static WireMockExtension wireMock = WireMockExtension.newInstance()
-            .options(wireMockConfig().dynamicPort())
-            .build();
+    static MockWebServer mockWebServer;
+
+    @BeforeAll
+    static void setUp() throws IOException {
+        mockWebServer = new MockWebServer();
+        mockWebServer.start();
+    }
+
+    @AfterAll
+    static void tearDown() throws IOException {
+        mockWebServer.shutdown();
+    }
 
     @DynamicPropertySource
     static void configure(DynamicPropertyRegistry registry) {
-        registry.add("app.email.provider", () -> "wiremock");
-        registry.add("app.email.provider-url", () -> wireMock.baseUrl() + "/send");
+        registry.add("app.email.provider", () -> "mockwebserver");
+        registry.add("app.email.provider-url", () -> mockWebServer.url("/send").toString());
     }
 
     @LocalServerPort
@@ -44,7 +55,7 @@ class ValidationFlowTest {
     }
 
     @Test
-    void fullFlowWorksIncludingMockedEmailProvider() {
+    void fullFlowWorksIncludingMockedEmailProvider() throws InterruptedException {
         Map<String, Object> payload = Map.of(
                 "amount", 2000,
                 "dueDate", LocalDate.now().minusDays(30).toString(),
@@ -78,7 +89,7 @@ class ValidationFlowTest {
         assertThat(preview.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(preview.getBody()).containsKeys("subject", "body");
 
-        wireMock.stubFor(post(urlEqualTo("/send")).willReturn(aResponse().withStatus(200)));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("{}"));
 
         Map<String, Object> sendPayload = Map.of(
                 "debtorEmail", "client@example.com",
@@ -96,7 +107,9 @@ class ValidationFlowTest {
         assertThat(send.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(send.getBody()).containsEntry("sent", true);
 
-        wireMock.verify(postRequestedFor(urlEqualTo("/send"))
-                .withRequestBody(matchingJsonPath("$.to", equalTo("client@example.com"))));
+        RecordedRequest recordedRequest = mockWebServer.takeRequest(2, TimeUnit.SECONDS);
+        assertThat(recordedRequest).isNotNull();
+        assertThat(recordedRequest.getPath()).isEqualTo("/send");
+        assertThat(recordedRequest.getBody().readUtf8()).contains("client@example.com");
     }
 }

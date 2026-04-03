@@ -57,7 +57,7 @@ VITE_API_BASE=http://localhost:8080 npm run dev
 - email preview
 - email send
 
-External email provider calls are mocked with WireMock only.
+External email provider calls are mocked with MockWebServer in backend integration tests.
 
 ### E2E tests (frontend → backend)
 `frontend/tests/full-flow.spec.js` executes the full UI journey against a real Spring Boot process:
@@ -71,7 +71,7 @@ The backend points to a mocked WireMock email endpoint in CI.
 
 ## GitHub Pipeline
 `.github/workflows/ci.yml` runs:
-1. backend tests (including integration flow + mocked external provider)
+1. backend tests (including integration flow + mocked external provider (MockWebServer in test runtime))
 2. frontend Playwright E2E against running backend + mocked email provider
 
 ## Validation Goal
