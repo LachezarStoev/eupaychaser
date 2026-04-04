@@ -1,16 +1,23 @@
 import { test, expect } from '@playwright/test';
 
-test('full FE->BE flow covers calculate, pdf, preview, send', async ({ page }) => {
+test('full FE->BE flow covers countries, calculate, pdf, preview, send', async ({ page }) => {
   await page.addInitScript(() => {
     window.open = () => null;
   });
 
   await page.goto('/');
 
+  await expect(page.getByRole('button', { name: 'Calculate' })).toBeDisabled();
+
+  const countryField = page.getByLabel('Country');
+  await expect(countryField).toContainText('BG (10.15%)');
+
   await page.getByLabel('Amount (€)').fill('2000');
   await page.getByLabel('Due Date').fill('2026-03-01');
   await page.getByLabel('Debtor Email').fill('client@example.com');
-  await page.getByLabel('Country').selectOption('BG');
+  await countryField.selectOption('BG');
+
+  await expect(page.getByRole('button', { name: 'Calculate' })).toBeEnabled();
 
   await page.getByRole('button', { name: 'Calculate' }).click();
   await expect(page.getByText('Calculation ready.')).toBeVisible();

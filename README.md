@@ -43,6 +43,7 @@ VITE_API_BASE=http://localhost:8080 npm run dev
 ```
 
 ## API Endpoints
+- `GET /api/countries`
 - `POST /api/calculate`
 - `POST /api/pdf`
 - `POST /api/email/preview`
@@ -87,3 +88,44 @@ Use `DEMO_OUTREACH_PLAN.md` to execute outreach and presentation.
 - Not legal advice
 - Not an EU authority
 - Independent service
+
+## Production-like configuration
+
+For real provider integration (still demo-safe), set:
+
+```bash
+APP_EMAIL_PROVIDER=mailgun
+APP_EMAIL_PROVIDER_URL=https://your-provider-endpoint.example/send
+```
+
+In local validation demos, keep defaults and email sending remains simulated when no provider URL is configured.
+
+## Validation operations assets
+
+- Contact list template: `VALIDATION_CONTACT_TRACKER.csv`
+- Outreach script + cadence: `DEMO_OUTREACH_PLAN.md`
+
+## Railway + Vercel readiness
+
+This repo is now prepared for validation-stage deployment:
+
+- **Backend (Railway)**: `backend/railway.json` is included and starts Spring Boot on Railway's `PORT`.
+- **Frontend (Vercel)**: `frontend/vercel.json` is included for Vite build output (`dist`).
+
+### Recommended environment variables
+
+Backend (Railway):
+- `APP_EMAIL_PROVIDER=mailgun` (or `sendgrid`)
+- `APP_EMAIL_PROVIDER_URL=<provider endpoint>`
+- `SPRING_PROFILES_ACTIVE=prod` (optional)
+
+Frontend (Vercel):
+- `VITE_API_BASE=https://<your-railway-backend-domain>`
+
+### Pre-go-live checklist
+
+1. Deploy backend on Railway from `/backend` root.
+2. Set backend env vars and verify `/api/calculate` responds.
+3. Deploy frontend on Vercel from `/frontend` root.
+4. Set `VITE_API_BASE` to Railway URL and redeploy.
+5. Run full UI flow: calculate → PDF → preview → send.

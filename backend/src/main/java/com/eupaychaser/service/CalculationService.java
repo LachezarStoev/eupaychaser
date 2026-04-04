@@ -8,20 +8,17 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.Map;
 
 @Service
 public class CalculationService {
     private static final BigDecimal FIXED_FEE = BigDecimal.valueOf(40);
-    private static final Map<String, BigDecimal> COUNTRY_RATES = Map.of(
-            "BG", BigDecimal.valueOf(10.15),
-            "DE", BigDecimal.valueOf(10.27),
-            "FR", BigDecimal.valueOf(12.15)
-    );
+    private final CountryRateService countryRateService;
 
+    public CalculationService(CountryRateService countryRateService) {
+        this.countryRateService = countryRateService;
+    }
     public CalculationResponse calculate(CaseRequest request) {
-        String country = request.country().toUpperCase();
-        BigDecimal rate = COUNTRY_RATES.getOrDefault(country, BigDecimal.valueOf(10.0));
+        BigDecimal rate = countryRateService.findRate(request.country());
 
         long lateDays = Math.max(0, ChronoUnit.DAYS.between(request.dueDate(), LocalDate.now()));
 
